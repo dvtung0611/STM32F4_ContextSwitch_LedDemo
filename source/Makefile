@@ -1,8 +1,8 @@
 CC = arm-none-eabi-gcc
 MCU_ARCHITECTURE = cortex-m4
 CFLAGS = -mthumb -mcpu=$(MCU_ARCHITECTURE) -mfloat-abi=soft -std=gnu11 -Wall -O0
-# LDFLAGS = -mthumb -mcpu=$(MCU_ARCHITECTURE) --specs=nano.specs -mfloat-abi=soft -T linker_stm32f407vgtx.ld -Wl,-Map=final.map
-LDFLAGS_SEMI = -mthumb -mcpu=$(MCU_ARCHITECTURE) --specs=rdimon.specs -mfloat-abi=soft -T linker_stm32f407vgtx.ld -Wl,-Map=final.map
+LDFLAGS = -mthumb -mcpu=$(MCU_ARCHITECTURE) --specs=nano.specs -mfloat-abi=soft -T linker_stm32f407vgtx.ld -Wl,-Map=final.map
+# LDFLAGS_SEMI = -mthumb -mcpu=$(MCU_ARCHITECTURE) --specs=rdimon.specs -mfloat-abi=soft -T linker_stm32f407vgtx.ld -Wl,-Map=final.map
 
 .PHONY: all clean
 

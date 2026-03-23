@@ -1,30 +1,42 @@
-# STM32F4_ContextSwitch_LedDemo
-## Project Overview
-This project demonstrates a bare-metal task scheduling mechanism on the STM32F4 Discovery board, implemented from scratch without using any vendor libraries (HAL/LL).
+# STM32F4 Bare-Metal Mini RTOS (LED Demo)
 
-It uses:
-- SysTick for periodic time base
-- PendSV for context switching
-- Custom startup code and linker script
-- The system controls 4 LEDs blinking at different time intervals, simulating a simple cooperative/preemptive scheduler.
+## Overview
 
-## Features
-- Bare-metal programming (no HAL, no CMSIS drivers except core headers if used)
-- Custom startup file
-- SysTick-based time slicing
-- PendSV-based context switching
-- Multiple tasks (LED blinking with different periods)
-- Direct register-level programming
+This project is a **bare-metal implementation of a simple preemptive scheduler (mini RTOS)** on the STM32F407 (ARM Cortex-M4), developed **without using HAL, CMSIS-RTOS, or any high-level libraries**.
+
+The system demonstrates **multi-tasking using SysTick and PendSV**, where multiple independent tasks run concurrently with different execution periods.
+
+> Goal: Understand deeply how an RTOS works internally — from **CPU startup sequence, stack management, exception handling, to context switching**.
+
+---
+
+## Key Features
+
+* Fully **bare-metal implementation** (direct register manipulation, no HAL/CMSIS abstraction layer)
+* Custom **startup code & linker script**
+* **Preemptive multitasking** using:
+  * SysTick (time base - 1ms tick)
+  * PendSV (context switching)
+* Manual **context switching mechanism**:
+  * Save/restore CPU registers (R0–R12, LR, PC, xPSR)
+* Separation of **MSP (kernel) and PSP (tasks)**
+* Basic **round-robin scheduler**
+* Task delay mechanism using **tick counter**
+* Fault handling enabled:
+  * HardFault, BusFault, UsageFault, MemManage
+
+---
 
 ## System Architecture
+
+### Scheduler Flow
 ```mermaid
 graph LR
-    A["SysTick Interrupt"] --> B["Tick Counter Update"]
-    B --> C["Unblock Tasks (if delay expired)"]
-    C --> D["Scheduler Decision (select next task)"]
-    D --> E["Trigger PendSV"]
-    E --> F["Context Switching"]
-    F --> G["Task Execution"]
+    A["SysTick Interrupt (1ms)"] --> B["Increment Global Tick"]
+    B --> C["Check Blocked Tasks and Unblock Ready Tasks"]
+    C --> D["Trigger PendSV"]
+    D --> E["Context Switch"]
+    E --> F["Next Task Executes"]
     
     classDef gray fill:#2ecc71,stroke:#27ae60,stroke-width:2px,color:#fff
     classDef green fill:#3498db,stroke:#2980b9,stroke-width:2px,color:#fff
@@ -34,21 +46,128 @@ graph LR
     class A gray
     class B,C,D green
     class E blue
-    class F,G purple
+    class F purple
 ```
 
-## Learning Objectives
-This project helps me understand:
-- ARM Cortex-M exception model
-- SysTick and PendSV usage
-- Context switching mechanism
-- Linker script and memory layout
-- Bare-metal firmware development workflow
+---
 
-## Notes
-- Hardware breakpoints are limited on Cortex-M cores
-- Ensure correct clock configuration if extended
-- Designed for educational purposes
+## Task Configuration
+
+The system runs 4 independent tasks controlling 4 LEDs on the STM32F4 Discovery board:
+
+| Task   | LED Color | Period  |
+| ------ | --------- | ------- |
+| Task 1 | Green     | 1000 ms |
+| Task 2 | Orange    | 500 ms  |
+| Task 3 | Blue      | 250 ms  |
+| Task 4 | Red       | 125 ms  |
+
+Each task operates independently using a delay mechanism based on system ticks.
+
+---
+
+## Hardware & Tools
+
+### Hardware
+
+* STM32F4 Discovery (STM32F407VG)
+
+### Software / Toolchain
+
+* GNU Arm Embedded Toolchain (`arm-none-eabi-gcc`)
+* OpenOCD (flashing & debugging)
+* GDB (debugging)
+* Makefile (build system)
+* VSCode (development)
+* STM32CubeIDE (for easier exploration)
+
+---
+
+## Startup Flow
+
+1. MCU Reset
+2. Load initial stack pointer (MSP)
+3. Copy `.data` from Flash → SRAM
+4. Zero initialize `.bss`
+5. Initialize system
+6. Jump to `main()`
+
+---
+
+## Context Switching Mechanism
+
+* **SysTick** triggers every 1ms → updates system tick
+* When a task needs switching:
+
+  * **PendSV is triggered**
+  * CPU automatically saves part of context
+  * Remaining registers are saved manually
+* Scheduler selects next task
+* Context of next task is restored
+* Execution resumes
+
+---
+
+## Core Concepts Covered
+
+This project demonstrates deep understanding of:
+
+### ARM Cortex-M Architecture
+
+* Thread mode vs Handler mode
+* Privileged vs Unprivileged execution
+* MSP vs PSP stack usage
+* Exception entry/exit behavior
+
+### CPU & Memory
+
+* Register set (R0–R12, LR, PC, xPSR)
+* Memory map of STM32F407
+* Stack types and stack frame
+
+### Interrupt & Exception Handling
+
+* NVIC configuration
+* SysTick & PendSV usage
+* Fault handling mechanisms
+
+### Bare-Metal Development
+
+* Writing Makefile from scratch
+* GCC compilation & linking process
+* Custom linker script
+* Flashing using OpenOCD + GDB
+
+---
 
 ## Demo
-![STM32F4 ContextSwitch_LedDemo](images/led_demo.jpg)
+
+Each LED toggles at a different frequency, demonstrating independent task execution:
+
+* Green → 1s
+* Orange → 500ms
+* Blue → 250ms
+* Red → 125ms
+
+Demo (click to the picture):
+
+[![Watch the demo](https://img.youtube.com/vi/Vvbdrus1IEg/0.jpg)](https://youtu.be/Vvbdrus1IEg)
+
+---
+
+## Notes
+
+* This project is for **educational purposes**
+* Code is written with focus on **understanding low-level behavior**, not production optimization
+* Naming/style may not follow strict industry conventions
+
+---
+
+## Learning Outcome
+
+After completing this project, I achieved:
+
+* Deep understanding of **RTOS internals**
+* Ability to write **bare-metal firmware from scratch**
+* Strong grasp of **ARM Cortex-M architecture**
+* Experience building **toolchain & debugging environment manually**
